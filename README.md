@@ -32,7 +32,8 @@ Note that these controls are not traditional, usually `Space` and `Up` are switc
 
 ## Downloads
 
-You can download the pre-compiled Windows/Linux Versions [here](https://github.com/atomflunder/tetris-rust/releases/tag/v.0.1.0).  
+You can download the pre-compiled Windows/Linux Versions [here, at the releases tab](https://github.com/atomflunder/tetris-rust/releases).  
+Make sure that the `./resources` folder and the `config.json` file are present in the same directory as the executeable.  
 
 Or, clone this repository and run:
 

@@ -110,8 +110,9 @@ Level | Blocks / Second
 
 This game uses its own piece rotation system. The pieces rotate clockwise when read from left-to-right.
 
-| ![](https://i.imgur.com/eTjpg2J.png) |
+| Piece rotations |
 |:---:|
+| ![](https://i.imgur.com/eTjpg2J.png) |
 | I-Piece |
 | ![](https://i.imgur.com/CIppum0.png) |
 | J-Piece |
@@ -121,9 +122,9 @@ This game uses its own piece rotation system. The pieces rotate clockwise when r
 | O-Piece |
 | ![](https://i.imgur.com/NyRYCuk.png) |
 | S-Piece |
-| ![](https://i.imgur.com/erG0vX7.png) |
-| Z-Piece |
 | ![](https://i.imgur.com/5kHYW1g.png) |
+| Z-Piece |
+| ![](https://i.imgur.com/erG0vX7.png) |
 | T-Piece |
 
 ## License

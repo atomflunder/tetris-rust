@@ -1,0 +1,7 @@
+{
+    "colored_board": true,
+    "modern_piece_rng": true,
+    "bag_amount": 5,
+    "first_piece_no_overhang": true,
+    "holding_enabled": true
+}

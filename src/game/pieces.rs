@@ -34,8 +34,8 @@ impl fmt::Display for Piece {
 
 impl Piece {
     /// We get a new random piece depending on the piece RNG selected.
-    pub fn get_random_piece(piece_bag: &mut Vec<Piece>, config: Config, first_bag: bool) -> Piece {
-        if config.modern_piece_rng == false {
+    pub fn get_random_piece(piece_bag: &mut Vec<Self>, config: Config, first_bag: bool) -> Self {
+        if !config.modern_piece_rng {
             return Self::get_random_piece_classic();
         }
 
@@ -43,7 +43,7 @@ impl Piece {
     }
 
     /// Gets a completely random piece, the "oldschool" Tetris Piece Algorithm.
-    pub fn get_random_piece_classic() -> Piece {
+    pub fn get_random_piece_classic() -> Self {
         let random_pieces = [
             Self::get_i_piece(),
             Self::get_l_piece(),
@@ -62,10 +62,10 @@ impl Piece {
 
     /// Gets a shuffled sequence of 7 Pieces, the modern Tetris Piece Algorithm.
     pub fn get_random_piece_modern(
-        piece_bag: &mut Vec<Piece>,
+        piece_bag: &mut Vec<Self>,
         config: Config,
         first_bag: bool,
-    ) -> Piece {
+    ) -> Self {
         if piece_bag.is_empty() {
             *piece_bag = Self::get_new_piece_bag(config, first_bag);
         }
@@ -74,8 +74,8 @@ impl Piece {
     }
 
     // These are its own functions because we need the individual pieces elsewhere too.
-    pub fn get_i_piece() -> Piece {
-        Piece {
+    pub fn get_i_piece() -> Self {
+        Self {
             piece_type: PieceType::I,
             color: (0, 255, 255),
             offset: (0, 3),
@@ -89,8 +89,8 @@ impl Piece {
         }
     }
 
-    pub fn get_l_piece() -> Piece {
-        Piece {
+    pub fn get_l_piece() -> Self {
+        Self {
             piece_type: PieceType::L,
             color: (255, 127, 0),
             offset: (0, 3),
@@ -104,8 +104,8 @@ impl Piece {
         }
     }
 
-    pub fn get_j_piece() -> Piece {
-        Piece {
+    pub fn get_j_piece() -> Self {
+        Self {
             piece_type: PieceType::J,
             color: (0, 0, 255),
             offset: (0, 3),
@@ -119,8 +119,8 @@ impl Piece {
         }
     }
 
-    pub fn get_s_piece() -> Piece {
-        Piece {
+    pub fn get_s_piece() -> Self {
+        Self {
             piece_type: PieceType::S,
             color: (0, 255, 0),
             offset: (0, 3),
@@ -134,8 +134,8 @@ impl Piece {
         }
     }
 
-    pub fn get_z_piece() -> Piece {
-        Piece {
+    pub fn get_z_piece() -> Self {
+        Self {
             piece_type: PieceType::Z,
             color: (255, 0, 0),
             offset: (0, 3),
@@ -149,8 +149,8 @@ impl Piece {
         }
     }
 
-    pub fn get_o_piece() -> Piece {
-        Piece {
+    pub fn get_o_piece() -> Self {
+        Self {
             piece_type: PieceType::O,
             color: (255, 255, 0),
             offset: (0, 3),
@@ -164,8 +164,8 @@ impl Piece {
         }
     }
 
-    pub fn get_t_piece() -> Piece {
-        Piece {
+    pub fn get_t_piece() -> Self {
+        Self {
             piece_type: PieceType::T,
             color: (128, 0, 128),
             offset: (0, 3),
@@ -180,8 +180,8 @@ impl Piece {
     }
 
     /// Gets a new "bag" of pieces, each Piece X times, shuffled.
-    pub fn get_new_piece_bag(config: Config, first_bag: bool) -> Vec<Piece> {
-        let mut random_pieces: Vec<Piece> = Vec::new();
+    pub fn get_new_piece_bag(config: Config, first_bag: bool) -> Vec<Self> {
+        let mut random_pieces: Vec<Self> = Vec::new();
         let mut bags = config.bag_amount;
 
         if bags < 1 {
@@ -202,7 +202,7 @@ impl Piece {
 
         // If the first piece no overhang setting is set to true,
         // we will prevent Z,S & Os spawning as the first piece to, well, prevent overhangs.
-        if first_bag == true && config.first_piece_no_overhang == true {
+        if first_bag && config.first_piece_no_overhang {
             while [PieceType::Z, PieceType::S, PieceType::O]
                 .contains(&random_pieces.last().unwrap().piece_type)
             {
@@ -210,18 +210,18 @@ impl Piece {
             }
         }
 
-        random_pieces.to_vec()
+        random_pieces.clone()
     }
 
     /// Spawning a new piece on the board.
-    pub fn spawn_piece(piece: Piece, game: &mut MainGame, spawn_held: bool) {
-        if game.game_over == true {
+    pub fn spawn_piece(piece: Self, game: &mut MainGame, spawn_held: bool) {
+        if game.game_over {
             return;
         }
 
         let piece_blocks = piece.orientations[0].clone();
 
-        if spawn_held == false {
+        if !spawn_held {
             match piece.piece_type {
                 PieceType::I => game.piece_count[0] += 1,
                 PieceType::L => game.piece_count[1] += 1,
@@ -240,7 +240,7 @@ impl Piece {
             if game.board.board[temp_block_0][temp_block_1] == ' ' {
                 game.board.board[temp_block_0][temp_block_1] = '#';
                 game.board.color[temp_block_0][temp_block_1] = piece.color;
-            } else if spawn_held == false {
+            } else if !spawn_held {
                 // If there is no room to spawn a new piece we set the game over flag to true.
                 game.game_over = true;
             }
@@ -249,7 +249,7 @@ impl Piece {
 
     /// Holds a piece and spawns the old piece held, if available.
     pub fn hold_piece(game: &mut MainGame) {
-        if game.can_swap == false || game.config.holding_enabled == false || game.game_over == true
+        if !game.can_swap || !game.config.holding_enabled || game.game_over
         {
             return;
         }
@@ -270,7 +270,7 @@ impl Piece {
 
             let new_piece = Self::get_random_piece(&mut game.piece_bag, game.config.clone(), false);
             game.current_piece = game.next_piece.clone();
-            Piece::spawn_piece(game.next_piece.clone(), game, true);
+            Self::spawn_piece(game.next_piece.clone(), game, true);
             match game.next_piece.piece_type {
                 PieceType::I => game.piece_count[0] += 1,
                 PieceType::L => game.piece_count[1] += 1,
@@ -308,21 +308,19 @@ impl Piece {
 
     /// Rotates a piece, either clockwise or counter-clockwise.
     /// Returns a bool whether or not the rotation succeeded.
-    pub fn rotate_piece(piece: &mut Piece, board: &mut Board, clockwise: bool) -> bool {
+    pub fn rotate_piece(piece: &mut Self, board: &mut Board, clockwise: bool) -> bool {
         let mut temp_rotation: usize;
 
-        if clockwise == true {
+        if clockwise {
             temp_rotation = piece.rotations + 1;
 
             if temp_rotation == 4 {
                 temp_rotation = 0;
             }
+        } else if piece.rotations == 0 {
+            temp_rotation = 3;
         } else {
-            if piece.rotations == 0 {
-                temp_rotation = 3;
-            } else {
-                temp_rotation = piece.rotations - 1;
-            }
+            temp_rotation = piece.rotations - 1;
         }
 
         // We first check if the rotation is valid, and return if not.
@@ -356,18 +354,16 @@ impl Piece {
             board.color[temp_block_0][temp_block_1] = (255, 255, 255);
         }
 
-        if clockwise == true {
+        if clockwise {
             piece.rotations += 1;
 
             if piece.rotations == 4 {
                 piece.rotations = 0;
             }
+        } else if piece.rotations == 0 {
+            piece.rotations = 3;
         } else {
-            if piece.rotations == 0 {
-                piece.rotations = 3;
-            } else {
-                piece.rotations -= 1;
-            }
+            piece.rotations -= 1;
         }
 
         for block in piece.orientations[piece.rotations].clone() {
@@ -384,7 +380,7 @@ impl Piece {
     /// Moves a piece down a row.
     /// Returns a bool whether or not the move succeeded.
     pub fn move_piece_down(game: &mut MainGame, shadow: bool, ctx: &mut ggez::Context) -> bool {
-        if game.game_over == true {
+        if game.game_over {
             return false;
         }
 
@@ -404,16 +400,16 @@ impl Piece {
                 || (game.board.board[temp_block_0 + 1][temp_block_1] == '#'
                     && !temp_piece_pos.contains(&(temp_block_0 + 1, temp_block_1)))
             {
-                if shadow != true {
+                if !shadow {
                     // If the piece cannot go any further and it is not a "shadow" piece
                     // we increase the score, level, check for full lines and so on.
-                    let lines_erased = MainGame::erase_lines(
+                    let lines_erased = u128::from(MainGame::erase_lines(
                         ctx,
                         &mut game.board,
                         &mut game.score,
                         game.level,
                         &mut game.clear_count,
-                    ) as u128;
+                    ));
 
                     game.lines_cleared += lines_erased;
 
@@ -422,7 +418,7 @@ impl Piece {
                     let new_piece =
                         Self::get_random_piece(&mut game.piece_bag, game.config.clone(), false);
                     game.current_piece = game.next_piece.clone();
-                    Piece::spawn_piece(game.next_piece.clone(), game, false);
+                    Self::spawn_piece(game.next_piece.clone(), game, false);
                     game.next_piece = new_piece;
 
                     game.can_swap = true;
@@ -455,7 +451,7 @@ impl Piece {
 
     /// Drops a piece down as far as it will go.
     pub fn drop_piece_down(game: &mut MainGame, shadow: bool, ctx: &mut ggez::Context) {
-        if game.game_over == true {
+        if game.game_over {
             return;
         }
 
@@ -464,7 +460,7 @@ impl Piece {
         loop {
             let stop = Self::move_piece_down(game, shadow, ctx);
             drop_counter += 1;
-            if stop == false {
+            if !stop {
                 break;
             }
         }
@@ -494,7 +490,7 @@ impl Piece {
 
     /// Moves a piece left on the board.
     /// Returns a bool whether or not the move succeeded.
-    pub fn move_piece_left(piece: &mut Piece, board: &mut Board) -> bool {
+    pub fn move_piece_left(piece: &mut Self, board: &mut Board) -> bool {
         for block in piece.orientations[piece.rotations].clone() {
             let temp_block_0 = block.0 + piece.offset.0;
             let temp_block_1 = block.1 + piece.offset.1;
@@ -537,7 +533,7 @@ impl Piece {
 
     /// Moves a piece right on the board.
     /// Returns a bool whether or not the move succeeded.
-    pub fn move_piece_right(piece: &mut Piece, board: &mut Board) -> bool {
+    pub fn move_piece_right(piece: &mut Self, board: &mut Board) -> bool {
         for block in piece.orientations[piece.rotations].clone() {
             let temp_block_0 = block.0 + piece.offset.0;
             let temp_block_1 = block.1 + piece.offset.1;

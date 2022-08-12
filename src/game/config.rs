@@ -41,7 +41,7 @@ fn holding_enabled_default() -> bool {
 
 impl Default for Config {
     fn default() -> Self {
-        Config {
+        Self {
             colored_board: colored_board_default(),
             modern_piece_rng: modern_piece_rng_default(),
             bag_amount: bag_amount_default(),

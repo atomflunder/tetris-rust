@@ -20,17 +20,17 @@ impl fmt::Display for Board {
                     write!(f, "{}", y)?;
                 }
             }
-            write!(f, "\n")?;
+            writeln!(f)?;
         }
-        write!(f, "\n")
+        writeln!(f)
     }
 }
 
 impl Board {
     pub fn new() -> Self {
-        return Board {
+        Self {
             board: [[' '; 10]; 20],
             color: [[(255, 255, 255); 10]; 20],
-        };
+        }
     }
 }

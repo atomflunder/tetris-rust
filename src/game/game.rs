@@ -38,7 +38,7 @@ pub struct MainGame {
 }
 
 impl MainGame {
-    fn new() -> GameResult<MainGame> {
+    fn new() -> GameResult<Self> {
         let config = load_config();
 
         let mut piece_bag = Piece::get_new_piece_bag(config.clone(), true);
@@ -46,11 +46,11 @@ impl MainGame {
         let piece = Piece::get_random_piece(&mut piece_bag, config.clone(), true);
         let next_piece = Piece::get_random_piece(&mut piece_bag, config.clone(), true);
 
-        let mut b = MainGame {
+        let mut b = Self {
             board: Board::new(),
             current_piece: piece.clone(),
-            next_piece: next_piece.clone(),
-            piece_bag: piece_bag,
+            next_piece,
+            piece_bag,
             score: 0,
             level: 1,
             lines_cleared: 0,
@@ -61,7 +61,7 @@ impl MainGame {
             down_presses: 0,
             paused: false,
             game_over: false,
-            config: config,
+            config,
         };
 
         Piece::spawn_piece(piece, &mut b, false);
@@ -75,7 +75,7 @@ impl MainGame {
         board: &mut Board,
         score: &mut u128,
         level: u128,
-        clear_count: &mut Vec<u128>,
+        clear_count: &mut [u128],
     ) -> u8 {
         let mut erase_count: u8 = 0;
 
@@ -106,8 +106,8 @@ impl MainGame {
                     // Basically the more lines erased, the more red the color will be.
                     // A tetris being full red.
                     1.0,
-                    0.5 - (erase_count as f32 / 8.0),
-                    0.5 - (erase_count as f32 / 8.0),
+                    0.5 - (f32::from(erase_count) / 8.0),
+                    0.5 - (f32::from(erase_count) / 8.0),
                     1.0,
                 ),
             )
@@ -169,8 +169,8 @@ impl MainGame {
         let next_piece = Piece::get_random_piece(&mut piece_bag, config.clone(), true);
 
         self.board = Board::new();
-        self.current_piece = piece.clone();
-        self.next_piece = next_piece.clone();
+        self.current_piece = piece;
+        self.next_piece = next_piece;
         self.piece_bag = piece_bag;
         self.score = 0;
         self.level = 1;
@@ -188,8 +188,7 @@ impl MainGame {
 
 impl event::EventHandler<GameError> for MainGame {
     fn update(&mut self, ctx: &mut ggez::Context) -> Result<(), GameError> {
-        while timer::check_update_time(ctx, (self.level as f32 / 5.0).ceil() as u32)
-            && self.paused == false
+        while timer::check_update_time(ctx, (self.level as f32 / 5.0).ceil() as u32) && !self.paused
         {
             Piece::move_piece_down(self, false, ctx);
         }
@@ -219,9 +218,9 @@ impl event::EventHandler<GameError> for MainGame {
             graphics::DrawMode::fill(),
             graphics::Rect::new(0.0, 0.0, 49.0, 49.0),
             Color::new(
-                self.current_piece.color.0 as f32,
-                self.current_piece.color.1 as f32,
-                self.current_piece.color.2 as f32,
+                f32::from(self.current_piece.color.0),
+                f32::from(self.current_piece.color.1),
+                f32::from(self.current_piece.color.2),
                 0.1,
             ),
         )?;
@@ -341,7 +340,7 @@ impl event::EventHandler<GameError> for MainGame {
         )?;
 
         // We stop drawing the board if you reach game over.
-        if self.game_over == false {
+        if !self.game_over {
             for (y, line) in self.board.board.iter().enumerate() {
                 for (x, block) in line.iter().enumerate() {
                     if shadow_coordinates.contains(&(y, x)) {
@@ -362,7 +361,7 @@ impl event::EventHandler<GameError> for MainGame {
                     if block == &'#' {
                         let mut block_color = self.board.color[y][x];
 
-                        if self.config.colored_board == false && !temp_piece_pos.contains(&(y, x)) {
+                        if !self.config.colored_board && !temp_piece_pos.contains(&(y, x)) {
                             block_color = (255, 255, 255);
                         }
 
@@ -462,8 +461,8 @@ impl event::EventHandler<GameError> for MainGame {
                     &mini_square,
                     graphics::DrawParam::default()
                         .dest([
-                            515.0 + (block.1 as f32 * 12.0),
-                            655.0 + (block.0 as f32 * 12.0) + (x as f32 * 48.0),
+                            (block.1 as f32).mul_add(12.0, 515.0),
+                            (x as f32).mul_add(48.0, (block.0 as f32).mul_add(12.0, 655.0)),
                         ])
                         .color(piece.color.into()),
                 )?;
@@ -476,8 +475,8 @@ impl event::EventHandler<GameError> for MainGame {
                 &square,
                 graphics::DrawParam::default()
                     .dest([
-                        520.0 + (block.1 as f32 * 50.0),
-                        300.0 + (block.0 as f32 * 50.0),
+                        (block.1 as f32).mul_add(50.0, 520.0),
+                        (block.0 as f32).mul_add(50.0, 300.0),
                     ])
                     .color(self.next_piece.color.into()),
             )?;
@@ -489,15 +488,13 @@ impl event::EventHandler<GameError> for MainGame {
             graphics::DrawParam::default().dest([665.0, 655.0]),
         )?;
 
-        if !self.held_piece.is_none() {
-            let held_color: Color;
+        if self.held_piece.is_some() {
+            let mut held_color = (60, 60, 60).into();
 
             // If you cant switch the held piece, we will color it grey,
             // otherwise it will be the actual piece color.
-            if self.can_swap == true {
+            if self.can_swap {
                 held_color = self.held_piece.clone().unwrap().color.into()
-            } else {
-                held_color = (60, 60, 60).into()
             }
 
             for block in &self.held_piece.clone().unwrap().orientations[0] {
@@ -506,15 +503,15 @@ impl event::EventHandler<GameError> for MainGame {
                     &square,
                     graphics::DrawParam::default()
                         .dest([
-                            520.0 + (block.1 as f32 * 50.0),
-                            500.0 + (block.0 as f32 * 50.0),
+                            (block.1 as f32).mul_add(50.0, 520.0),
+                            (block.0 as f32).mul_add(50.0, 500.0),
                         ])
                         .color(held_color),
                 )?;
             }
         }
 
-        if self.paused == true {
+        if self.paused {
             let paused_text = Text::new(TextFragment::new("PAUSED").font(font).scale(75.0));
 
             graphics::draw(
@@ -539,7 +536,7 @@ impl event::EventHandler<GameError> for MainGame {
         repeat: bool,
     ) {
         // If the game is paused, we dont listen to any keystrokes except for Escape.
-        if self.paused == false {
+        if !self.paused {
             match keycode {
                 event::KeyCode::Left => {
                     Piece::move_piece_left(&mut self.current_piece, &mut self.board);
@@ -564,25 +561,20 @@ impl event::EventHandler<GameError> for MainGame {
                     Piece::hold_piece(self);
                 }
                 event::KeyCode::Return => {
-                    if self.game_over == true && repeat == true {
+                    if self.game_over && repeat {
                         self.reset_game();
                     }
                 }
                 event::KeyCode::Escape => {
                     // No real reason to pause on the game over screen.
-                    if self.game_over == false {
+                    if !self.game_over {
                         self.paused = true;
                     }
                 }
                 _ => (),
             }
-        } else {
-            match keycode {
-                event::KeyCode::Escape => {
-                    self.paused = false;
-                }
-                _ => (),
-            }
+        } else if keycode == event::KeyCode::Escape {
+            self.paused = false;
         }
     }
 
@@ -593,11 +585,8 @@ impl event::EventHandler<GameError> for MainGame {
         _keymods: event::KeyMods,
     ) {
         // Resetting the down presses when you release the down key.
-        match keycode {
-            event::KeyCode::Down => {
-                self.down_presses = 0;
-            }
-            _ => (),
+        if keycode == event::KeyCode::Down {
+            self.down_presses = 0;
         }
     }
 }
